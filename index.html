@@ -267,6 +267,7 @@
   .answer-card .who {
     font-size: 11px; color: var(--muted);
     margin-bottom: 8px; letter-spacing: 1px;
+    padding-right: 64px;
   }
   .answer-card textarea {
     width: 100%; min-height: 90px;
@@ -440,6 +441,82 @@
     letter-spacing: 1px; border: 1px solid var(--ink);
   }
 
+  /* drawing board */
+  .draw-board {
+    background: var(--paper);
+    border: 2px dashed var(--ink);
+    padding: 12px;
+    display: inline-block;
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  .draw-canvas {
+    display: block;
+    background: #ffffff;
+    cursor: crosshair;
+    touch-action: none;
+    image-rendering: pixelated;
+  }
+  .draw-tools {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  .swatch {
+    width: 24px; height: 24px;
+    border: 2px solid var(--ink);
+    cursor: pointer;
+    transition: transform 0.08s;
+    box-shadow: 1px 1px 0 var(--ink);
+  }
+  .swatch:hover { transform: scale(1.1); }
+  .swatch.active {
+    transform: scale(1.15);
+    box-shadow: 2px 2px 0 var(--pink);
+  }
+  .tool-btn {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    padding: 4px 10px;
+    background: var(--bg);
+    border: 2px solid var(--ink);
+    cursor: pointer;
+    color: var(--ink);
+    text-transform: lowercase;
+    letter-spacing: 1px;
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+  .tool-btn:hover { background: var(--paper); }
+  .brush-sizes { display: inline-flex; gap: 4px; }
+  .brush-size {
+    width: 28px; height: 24px;
+    border: 2px solid var(--ink);
+    background: var(--bg);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .brush-size.active { background: var(--pink-soft); box-shadow: inset 1px 1px 0 var(--ink); }
+  .brush-size .dot { background: var(--ink); border-radius: 50%; }
+  .brush-size.s1 .dot { width: 3px; height: 3px; }
+  .brush-size.s2 .dot { width: 6px; height: 6px; }
+  .brush-size.s3 .dot { width: 10px; height: 10px; }
+
+  /* avatar on answer cards */
+  .avatar {
+    position: absolute;
+    top: 12px; right: 12px;
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    border: 2px solid var(--ink);
+    object-fit: cover;
+    background: var(--bg);
+    box-shadow: 2px 2px 0 var(--ink);
+    z-index: 1;
+  }
+  .answer-card.mine .avatar { border-color: var(--pink); box-shadow: 2px 2px 0 var(--pink); }
+  .answer-card.theirs .avatar { border-color: var(--blue); box-shadow: 2px 2px 0 var(--blue); }
+
   .info-banner {
     background: #fff8f1; border: 1px dashed var(--ink);
     padding: 12px 16px; font-size: 12px; color: var(--muted);
@@ -466,7 +543,7 @@
     <!-- ============ LOBBY ============ -->
     <section id="screen-lobby" class="screen active">
       <h1 class="title">i love you, <span class="heart">♥</span><br>but who are you?</h1>
-      <p class="subtitle">a date_night.exe utility — v3.0.2 — peer to peer, no setup</p>
+      <p class="subtitle">a date_night.exe utility — v3.0.3 — now with self-portraits</p>
 
       <div class="rejoin-banner" id="rejoinBanner" style="display:none;">
         <div class="info">
@@ -512,11 +589,35 @@
       <h1 class="title">create_room() <span class="heart">♥</span></h1>
       <p class="subtitle">give yourself a name — you'll be player one</p>
 
-      <div class="card solid" data-tag="// player_one.json" style="max-width: 480px;">
+      <div class="card solid" data-tag="// player_one.json" style="max-width: 560px;">
         <div class="field">
           <label for="createName">your name</label>
           <input id="createName" type="text" maxlength="20" placeholder="solbee" />
         </div>
+
+        <div class="field">
+          <label>draw yourself (optional)</label>
+          <div class="draw-board">
+            <canvas id="drawCanvasCreate" class="draw-canvas" width="200" height="200"></canvas>
+            <div class="draw-tools">
+              <span class="swatch active" data-color="#1f1d1b" style="background:#1f1d1b"></span>
+              <span class="swatch" data-color="#ff5e8a" style="background:#ff5e8a"></span>
+              <span class="swatch" data-color="#5e8bff" style="background:#5e8bff"></span>
+              <span class="swatch" data-color="#6ec27a" style="background:#6ec27a"></span>
+              <span class="swatch" data-color="#ffd95e" style="background:#ffd95e"></span>
+              <span class="swatch" data-color="#a07cff" style="background:#a07cff"></span>
+              <span class="swatch" data-color="#ff8c42" style="background:#ff8c42"></span>
+              <span class="swatch" data-color="#ffffff" style="background:#ffffff; border-style:dashed;" title="eraser"></span>
+              <div class="brush-sizes">
+                <div class="brush-size s1" data-size="2"><div class="dot"></div></div>
+                <div class="brush-size s2 active" data-size="4"><div class="dot"></div></div>
+                <div class="brush-size s3" data-size="8"><div class="dot"></div></div>
+              </div>
+              <button type="button" class="tool-btn" id="clearCanvasCreate">clear</button>
+            </div>
+          </div>
+        </div>
+
         <div id="createError" class="error" style="display:none;"></div>
         <button class="btn" id="createGoBtn" disabled>create_room() →</button>
         <button class="btn ghost small" id="createBackBtn" style="margin-left: 8px;">← back</button>
@@ -528,7 +629,7 @@
       <h1 class="title">join_room() <span class="heart">♥</span></h1>
       <p class="subtitle">enter the code your partner sent you</p>
 
-      <div class="card solid" data-tag="// player_two.json" style="max-width: 480px;">
+      <div class="card solid" data-tag="// player_two.json" style="max-width: 560px;">
         <div class="field">
           <label for="joinCode">room code</label>
           <input id="joinCode" type="text" maxlength="4" placeholder="ABCD" style="text-transform: uppercase; letter-spacing: 6px;" />
@@ -537,6 +638,30 @@
           <label for="joinName">your name</label>
           <input id="joinName" type="text" maxlength="20" placeholder="your name" />
         </div>
+
+        <div class="field">
+          <label>draw yourself (optional)</label>
+          <div class="draw-board">
+            <canvas id="drawCanvasJoin" class="draw-canvas" width="200" height="200"></canvas>
+            <div class="draw-tools">
+              <span class="swatch active" data-color="#1f1d1b" style="background:#1f1d1b"></span>
+              <span class="swatch" data-color="#ff5e8a" style="background:#ff5e8a"></span>
+              <span class="swatch" data-color="#5e8bff" style="background:#5e8bff"></span>
+              <span class="swatch" data-color="#6ec27a" style="background:#6ec27a"></span>
+              <span class="swatch" data-color="#ffd95e" style="background:#ffd95e"></span>
+              <span class="swatch" data-color="#a07cff" style="background:#a07cff"></span>
+              <span class="swatch" data-color="#ff8c42" style="background:#ff8c42"></span>
+              <span class="swatch" data-color="#ffffff" style="background:#ffffff; border-style:dashed;" title="eraser"></span>
+              <div class="brush-sizes">
+                <div class="brush-size s1" data-size="2"><div class="dot"></div></div>
+                <div class="brush-size s2 active" data-size="4"><div class="dot"></div></div>
+                <div class="brush-size s3" data-size="8"><div class="dot"></div></div>
+              </div>
+              <button type="button" class="tool-btn" id="clearCanvasJoin">clear</button>
+            </div>
+          </div>
+        </div>
+
         <div id="joinError" class="error" style="display:none;"></div>
         <button class="btn" id="joinGoBtn" disabled>join_room() →</button>
         <button class="btn ghost small" id="joinBackBtn" style="margin-left: 8px;">← back</button>
@@ -587,6 +712,7 @@
 
       <div class="answers">
         <div class="answer-card mine" id="cardMine" data-label="">
+          <img class="avatar" id="avatarMine" style="display:none;" alt="you" />
           <div class="who" id="whoMine">you:</div>
           <textarea id="answerMine" placeholder="type your guess here..."></textarea>
           <div class="reveal-text" id="revealMine" style="display:none;"></div>
@@ -594,6 +720,7 @@
         </div>
 
         <div class="answer-card theirs" id="cardTheirs" data-label="">
+          <img class="avatar" id="avatarTheirs" style="display:none;" alt="them" />
           <div class="who" id="whoTheirs">ddongjaengyi:</div>
           <div class="hidden-answer" id="hiddenTheirs">
             <span class="typing-dots">typing</span>
@@ -832,6 +959,89 @@
     saveStateToLS();
   }
 
+  // ============ DRAWING BOARD ============
+  function setupDrawingBoard(canvasId, clearBtnId) {
+    const canvas = $(canvasId);
+    if (!canvas) return null;
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+    let lastX = 0, lastY = 0;
+    let color = '#1f1d1b';
+    let size = 4;
+    let hasDrawn = false;
+
+    function clear() {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      hasDrawn = false;
+    }
+    clear();
+
+    function coords(e) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: (e.clientX - rect.left) * (canvas.width / rect.width),
+        y: (e.clientY - rect.top) * (canvas.height / rect.height)
+      };
+    }
+
+    canvas.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      canvas.setPointerCapture(e.pointerId);
+      isDrawing = true;
+      hasDrawn = true;
+      const { x, y } = coords(e);
+      lastX = x; lastY = y;
+      ctx.beginPath();
+      ctx.fillStyle = color;
+      ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    canvas.addEventListener('pointermove', (e) => {
+      if (!isDrawing) return;
+      e.preventDefault();
+      const { x, y } = coords(e);
+      ctx.beginPath();
+      ctx.moveTo(lastX, lastY);
+      ctx.lineTo(x, y);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = size;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+      lastX = x; lastY = y;
+    });
+    const stop = () => { isDrawing = false; };
+    canvas.addEventListener('pointerup', stop);
+    canvas.addEventListener('pointercancel', stop);
+    canvas.addEventListener('pointerleave', stop);
+
+    const board = canvas.closest('.draw-board');
+    board.querySelectorAll('.swatch').forEach(sw => {
+      sw.addEventListener('click', () => {
+        board.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+        sw.classList.add('active');
+        color = sw.dataset.color;
+      });
+    });
+    board.querySelectorAll('.brush-size').forEach(bs => {
+      bs.addEventListener('click', () => {
+        board.querySelectorAll('.brush-size').forEach(s => s.classList.remove('active'));
+        bs.classList.add('active');
+        size = parseInt(bs.dataset.size, 10);
+      });
+    });
+    $(clearBtnId).addEventListener('click', clear);
+
+    return {
+      getDataUrl: () => hasDrawn ? canvas.toDataURL('image/png') : null,
+      clear
+    };
+  }
+
+  const createBoard = setupDrawingBoard('drawCanvasCreate', 'clearCanvasCreate');
+  const joinBoard = setupDrawingBoard('drawCanvasJoin', 'clearCanvasJoin');
+
   // ============ LOBBY ============
   $("createChoice").addEventListener("click", () => {
     $("createName").value = "";
@@ -866,7 +1076,8 @@
       const code = makeRoomCode();
       myRole = "p1";
       myName = name;
-      state = { p1: { name }, p2: null, currentQ: 0, answers: {} };
+      const avatar = createBoard?.getDataUrl() || null;
+      state = { p1: { name, avatar }, p2: null, currentQ: 0, answers: {} };
       saveLastRoom({ code, role: "p1", name });
       await setupRoom(code);
       $("waitingCode").textContent = code;
@@ -928,7 +1139,8 @@
     try {
       myRole = "p2";
       myName = name;
-      state = { p1: null, p2: { name }, currentQ: 0, answers: {} };
+      const avatar = joinBoard?.getDataUrl() || null;
+      state = { p1: null, p2: { name, avatar }, currentQ: 0, answers: {} };
       saveLastRoom({ code, role: "p2", name });
       await setupRoom(code);
       $("topbar-right").textContent = `room: ${code} — ${name}`;
@@ -985,6 +1197,17 @@
 
     $("cardMine").setAttribute("data-label", `${myName.toLowerCase()}.txt (you)`);
     $("cardTheirs").setAttribute("data-label", `${(partnerName() || "ddongjaengyi").toLowerCase()}.txt`);
+
+    // avatars
+    const partnerRole = myRole === "p1" ? "p2" : "p1";
+    const myAvatar = state[myRole]?.avatar;
+    const theirAvatar = state[partnerRole]?.avatar;
+    const avatarMine = $("avatarMine");
+    const avatarTheirs = $("avatarTheirs");
+    if (myAvatar) { avatarMine.src = myAvatar; avatarMine.style.display = ""; }
+    else { avatarMine.style.display = "none"; }
+    if (theirAvatar) { avatarTheirs.src = theirAvatar; avatarTheirs.style.display = ""; }
+    else { avatarTheirs.style.display = "none"; }
   }
 
   function renderAnswers() {
