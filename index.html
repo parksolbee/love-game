@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>i_love_you.exe — but who are you?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Space+Mono:wght@400;700&family=DotGothic16&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fef6ed;
+    --ink: #1f1d1b;
+    --muted: #7a716a;
+    --paper: #ffffff;
+    --pink: #ff5e8a;
+    --pink-soft: #ffd6e2;
+    --blue: #5e8bff;
+    --blue-soft: #d6e2ff;
+    --green: #6ec27a;
+    --yellow: #ffd95e;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
+    background-image: radial-gradient(circle, rgba(31,29,27,0.12) 1px, transparent 1px);
+    background-size: 18px 18px;
+  }
+
+  .topbar {
+    width: 100%;
+    background: var(--ink);
+    color: var(--bg);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    letter-spacing: 0.5px;
+  }
+  .topbar .dots { display: flex; gap: 6px; }
+  .topbar .dots span { width: 10px; height: 10px; border-radius: 50%; background: #555; }
+  .topbar .dots span:nth-child(1) { background: #ff5f57; }
+  .topbar .dots span:nth-child(2) { background: #febc2e; }
+  .topbar .dots span:nth-child(3) { background: #28c840; }
+  .topbar .path { opacity: 0.9; flex: 1; }
+  .topbar .right { font-size: 11px; opacity: 0.7; }
+  .blink { animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .app { max-width: 980px; margin: 40px auto; padding: 0 24px 80px; }
+
+  .screen { display: none; }
+  .screen.active { display: block; animation: fadeUp 0.4s ease; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  h1.title {
+    font-family: 'VT323', monospace;
+    font-size: clamp(48px, 8vw, 88px);
+    line-height: 0.95;
+    margin: 0 0 8px;
+    letter-spacing: 1px;
+  }
+  h1.title .heart { color: var(--pink); display: inline-block; animation: beat 1.2s infinite; }
+  @keyframes beat {
+    0%, 60%, 100% { transform: scale(1); }
+    30% { transform: scale(1.15); }
+  }
+  .subtitle { font-size: 14px; color: var(--muted); margin: 0 0 32px; }
+  .subtitle::before { content: "// "; color: var(--pink); }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700; font-size: 15px;
+    padding: 14px 22px;
+    background: var(--ink); color: var(--bg);
+    border: 2px solid var(--ink);
+    cursor: pointer;
+    text-transform: lowercase;
+    letter-spacing: 1px;
+    box-shadow: 4px 4px 0 var(--pink);
+    transition: transform 0.08s ease, box-shadow 0.08s ease;
+  }
+  .btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--pink); }
+  .btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--pink); }
+  .btn.ghost { background: transparent; color: var(--ink); box-shadow: 4px 4px 0 var(--blue); }
+  .btn.ghost:hover { box-shadow: 6px 6px 0 var(--blue); }
+  .btn.small { font-size: 12px; padding: 8px 14px; box-shadow: 3px 3px 0 var(--ink); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: 4px 4px 0 #aaa; }
+
+  .card {
+    background: var(--paper);
+    border: 2px dashed var(--ink);
+    padding: 32px;
+    position: relative;
+    margin-bottom: 24px;
+  }
+  .card.solid { border-style: solid; box-shadow: 6px 6px 0 var(--ink); }
+  .card[data-tag]::before {
+    content: attr(data-tag);
+    position: absolute;
+    top: -12px; left: 16px;
+    background: var(--bg);
+    padding: 0 8px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .field { margin-bottom: 18px; }
+  .field label {
+    display: block; font-size: 12px;
+    color: var(--muted); margin-bottom: 6px;
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+  .field label::before { content: "> "; color: var(--pink); }
+  .field input {
+    width: 100%;
+    font-family: 'VT323', monospace;
+    font-size: 26px;
+    padding: 8px 12px;
+    border: none;
+    border-bottom: 2px dashed var(--ink);
+    background: transparent;
+    color: var(--ink);
+    outline: none;
+  }
+  .field input:focus { border-bottom-color: var(--pink); }
+
+  .lobby-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 16px;
+  }
+  @media (max-width: 720px) { .lobby-grid { grid-template-columns: 1fr; } }
+  .lobby-choice {
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    padding: 24px;
+    cursor: pointer;
+    transition: transform 0.08s, box-shadow 0.08s;
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  .lobby-choice:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--pink); }
+  .lobby-choice h3 {
+    font-family: 'VT323', monospace;
+    font-size: 32px;
+    margin: 0 0 8px;
+  }
+  .lobby-choice p { font-size: 12px; color: var(--muted); margin: 0; }
+  .lobby-choice .icon { font-size: 36px; margin-bottom: 8px; display: block; }
+
+  .code-box {
+    background: var(--ink);
+    color: var(--bg);
+    padding: 28px;
+    text-align: center;
+    margin: 24px 0;
+    font-family: 'VT323', monospace;
+    border: 2px solid var(--ink);
+  }
+  .code-box .label {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px; letter-spacing: 3px;
+    opacity: 0.7; margin-bottom: 8px;
+  }
+  .code-box .code {
+    font-size: 72px; letter-spacing: 8px;
+    color: var(--pink); line-height: 1;
+  }
+  .copy-row {
+    display: flex; gap: 8px;
+    justify-content: center; margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  .waiting-status {
+    text-align: center; font-size: 14px;
+    color: var(--muted); margin: 16px 0;
+  }
+  .waiting-status .pulse { color: var(--pink); }
+
+  .game-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 20px; font-size: 13px; color: var(--muted); gap: 12px;
+  }
+  .progress-bar {
+    flex: 1; height: 14px;
+    background: var(--paper); border: 2px solid var(--ink);
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; background: var(--pink);
+    width: 0%; transition: width 0.4s ease;
+    background-image: repeating-linear-gradient(
+      45deg, transparent, transparent 6px,
+      rgba(255,255,255,0.25) 6px, rgba(255,255,255,0.25) 12px
+    );
+  }
+
+  .question-card {
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    padding: 28px 32px;
+    margin-bottom: 28px;
+    position: relative;
+    box-shadow: 6px 6px 0 var(--ink);
+  }
+  .question-card::before {
+    content: "QUESTION";
+    position: absolute; top: -12px; left: 20px;
+    background: var(--ink); color: var(--bg);
+    padding: 2px 10px; font-size: 11px; letter-spacing: 2px;
+  }
+  .q-meta {
+    font-size: 11px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+  .q-meta .tag {
+    display: inline-block; padding: 2px 8px;
+    background: var(--yellow); color: var(--ink);
+    border: 1px solid var(--ink); margin-right: 6px;
+  }
+  .q-text {
+    font-family: 'VT323', monospace;
+    font-size: clamp(32px, 5vw, 44px);
+    line-height: 1.15; margin: 4px 0 0;
+    padding-right: 80px;
+  }
+  .q-emoji {
+    font-size: 56px; position: absolute;
+    right: 20px; top: 50%;
+    transform: translateY(-50%) rotate(-8deg);
+  }
+
+  .answers {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+  }
+  @media (max-width: 720px) { .answers { grid-template-columns: 1fr; } }
+
+  .answer-card {
+    background: var(--paper);
+    border: 2px dashed var(--ink);
+    padding: 20px;
+    position: relative;
+    min-height: 200px;
+  }
+  .answer-card.mine { background: #fff5f8; border-color: var(--pink); border-style: solid; }
+  .answer-card.theirs { background: #f5f8ff; }
+  .answer-card::before {
+    content: attr(data-label);
+    position: absolute; top: -11px; left: 16px;
+    background: var(--bg); padding: 0 10px;
+    font-size: 12px; font-weight: 700;
+  }
+  .answer-card.mine::before { color: var(--pink); }
+  .answer-card.theirs::before { color: var(--blue); }
+  .answer-card .who {
+    font-size: 11px; color: var(--muted);
+    margin-bottom: 8px; letter-spacing: 1px;
+  }
+  .answer-card textarea {
+    width: 100%; min-height: 90px;
+    font-family: 'VT323', monospace;
+    font-size: 24px; line-height: 1.3; padding: 10px;
+    border: 1px solid transparent;
+    background: rgba(255,255,255,0.6);
+    color: var(--ink); outline: none; resize: vertical;
+  }
+  .answer-card textarea:focus { border-color: var(--ink); }
+  .answer-card textarea:disabled { opacity: 0.7; cursor: not-allowed; }
+
+  .status {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--muted);
+    margin-top: 8px; letter-spacing: 1px;
+  }
+  .status .dot { width: 8px; height: 8px; border-radius: 50%; background: #ccc; }
+  .status.locked .dot { background: var(--green); }
+  .status.waiting .dot { background: var(--yellow); animation: pulse 1.2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  .hidden-answer {
+    font-family: 'VT323', monospace;
+    font-size: 24px; line-height: 1.3;
+    color: var(--muted); padding: 14px 10px;
+    font-style: italic; text-align: center;
+    background: repeating-linear-gradient(
+      45deg, transparent, transparent 6px,
+      rgba(94,139,255,0.15) 6px, rgba(94,139,255,0.15) 12px
+    );
+    border-radius: 4px;
+  }
+  .hidden-answer .typing-dots::after {
+    content: '...';
+    animation: dots 1.4s steps(4) infinite;
+  }
+  @keyframes dots { 0%,20% { content:''; } 40% { content:'.'; } 60% { content:'..'; } 80%,100% { content:'...'; } }
+
+  .reveal-text {
+    font-family: 'VT323', monospace;
+    font-size: 28px; line-height: 1.25;
+    padding: 8px 0; color: var(--ink);
+    word-break: break-word;
+  }
+  .reveal-text.empty { color: var(--muted); font-style: italic; }
+  .reveal-text::before { content: '"'; color: var(--pink); margin-right: 4px; }
+  .reveal-text::after { content: '"'; color: var(--pink); margin-left: 4px; }
+
+  .actions-row {
+    display: flex; justify-content: center; gap: 12px;
+    margin-top: 28px; flex-wrap: wrap;
+  }
+
+  .end-card {
+    background: var(--paper); border: 2px solid var(--ink);
+    padding: 40px; text-align: center;
+    box-shadow: 6px 6px 0 var(--pink);
+    max-width: 720px; margin: 0 auto;
+  }
+  .big-emoji { font-size: 80px; display: block; margin-bottom: 16px; animation: beat 1.4s infinite; }
+  .end-card h2 {
+    font-family: 'VT323', monospace;
+    font-size: 48px; margin: 0 0 16px;
+  }
+  .end-card p { color: var(--muted); font-size: 14px; line-height: 1.6; }
+  .summary {
+    margin: 24px 0; text-align: left;
+    max-height: 360px; overflow-y: auto;
+    padding: 16px; background: var(--bg);
+    border: 1px dashed var(--ink); font-size: 12px;
+  }
+  .summary .q { color: var(--pink); margin-top: 12px; font-weight: 700; }
+  .summary .q:first-child { margin-top: 0; }
+  .summary .a { padding-left: 12px; color: var(--ink); }
+  .summary .a span { color: var(--muted); }
+
+  .error {
+    background: #ffe2e6; border: 1px solid var(--pink);
+    color: var(--ink); padding: 10px 14px;
+    margin: 12px 0; font-size: 12px;
+  }
+
+  .sparkle {
+    position: fixed; font-size: 24px;
+    pointer-events: none; opacity: 0.35;
+    animation: float 6s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-12px) rotate(8deg); }
+  }
+
+  .meme-strip { display: flex; gap: 12px; margin: 24px 0 0; flex-wrap: wrap; }
+  .meme {
+    width: 64px; height: 64px;
+    background: var(--paper); border: 2px solid var(--ink);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px; transform: rotate(-3deg);
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  .meme:nth-child(2n) { transform: rotate(2deg); background: var(--pink-soft); }
+  .meme:nth-child(3n) { transform: rotate(-1deg); background: var(--blue-soft); }
+
+  .footer-actions {
+    margin-top: 24px; font-size: 11px;
+    color: var(--muted); text-align: center;
+  }
+  .footer-actions a, .footer-actions button.link {
+    color: var(--pink); cursor: pointer;
+    background: none; border: none;
+    font-family: inherit; font-size: inherit;
+    text-decoration: underline; padding: 0;
+  }
+
+  .nav-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px;
+    background: var(--paper); border: 2px solid var(--ink);
+    color: var(--ink); cursor: pointer;
+    font-family: 'VT323', monospace;
+    font-size: 22px; line-height: 1;
+    box-shadow: 2px 2px 0 var(--ink);
+    transition: transform 0.08s, box-shadow 0.08s; padding: 0;
+  }
+  .nav-btn:hover:not(:disabled) {
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 var(--pink);
+  }
+  .nav-btn:active:not(:disabled) {
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0 var(--ink);
+  }
+  .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; box-shadow: 2px 2px 0 #aaa; }
+  .nav-group { display: inline-flex; gap: 6px; align-items: center; }
+
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(31,29,27,0.5);
+    display: none; align-items: center; justify-content: center;
+    z-index: 100; padding: 20px;
+  }
+  .modal-overlay.active { display: flex; animation: fadeUp 0.2s ease; }
+  .modal {
+    background: var(--paper); border: 2px solid var(--ink);
+    box-shadow: 8px 8px 0 var(--pink); padding: 32px;
+    max-width: 440px; width: 100%; position: relative;
+  }
+  .modal h3 {
+    font-family: 'VT323', monospace; font-size: 36px; margin: 0 0 8px;
+  }
+  .modal .sub { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+  .modal .sub::before { content: "// "; color: var(--pink); }
+  .modal-actions { display: flex; flex-direction: column; gap: 10px; }
+  .modal-actions .btn { width: 100%; justify-content: center; }
+
+  .rejoin-banner {
+    background: var(--paper); border: 2px dashed var(--pink);
+    padding: 14px 18px; margin-bottom: 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap;
+  }
+  .rejoin-banner .info { font-size: 13px; }
+  .rejoin-banner .info strong { color: var(--pink); font-family: 'VT323', monospace; font-size: 20px; letter-spacing: 2px; }
+  .rejoin-banner .info .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .answered-pill {
+    display: inline-block; margin-left: 8px;
+    padding: 2px 8px; background: var(--green);
+    color: var(--paper); font-size: 10px;
+    letter-spacing: 1px; border: 1px solid var(--ink);
+  }
+
+  .info-banner {
+    background: #fff8f1; border: 1px dashed var(--ink);
+    padding: 12px 16px; font-size: 12px; color: var(--muted);
+    margin-top: 16px;
+  }
+  .info-banner strong { color: var(--ink); }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="dots"><span></span><span></span><span></span></div>
+    <div class="path">~ / love.exe — <span id="topbar-status">idle</span><span class="blink">_</span></div>
+    <div class="right" id="topbar-right"></div>
+  </div>
+
+  <div class="sparkle" style="top: 12%; left: 6%;">✦</div>
+  <div class="sparkle" style="top: 70%; left: 4%; animation-delay: 1s;">♡</div>
+  <div class="sparkle" style="top: 25%; right: 8%; animation-delay: 2s;">✧</div>
+  <div class="sparkle" style="top: 80%; right: 6%; animation-delay: 3s;">♡</div>
+
+  <div class="app">
+
+    <!-- ============ LOBBY ============ -->
+    <section id="screen-lobby" class="screen active">
+      <h1 class="title">i love you, <span class="heart">♥</span><br>but who are you?</h1>
+      <p class="subtitle">a date_night.exe utility — v3.0.0 — peer to peer, no setup</p>
+
+      <div class="rejoin-banner" id="rejoinBanner" style="display:none;">
+        <div class="info">
+          <div>rejoin previous room: <strong id="rejoinCode">----</strong></div>
+          <div class="sub" id="rejoinMeta">you were ___ — picks up where you left off</div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn small" id="rejoinBtn">rejoin →</button>
+          <button class="btn ghost small" id="forgetRejoinBtn">forget</button>
+        </div>
+      </div>
+
+      <div class="lobby-grid">
+        <div class="lobby-choice" id="createChoice">
+          <span class="icon">✦</span>
+          <h3>create_room()</h3>
+          <p>start a new game and get a code to send your partner</p>
+        </div>
+        <div class="lobby-choice" id="joinChoice">
+          <span class="icon">♡</span>
+          <h3>join_room()</h3>
+          <p>your partner already started — enter their code</p>
+        </div>
+      </div>
+
+      <div class="info-banner">
+        <strong>how it works:</strong> no accounts, no setup. one of you creates a room and gets a 4-letter code, sends it to the other, you both play live. just make sure you've each got this file open on your computer.
+      </div>
+
+      <div class="meme-strip">
+        <div class="meme">♡</div>
+        <div class="meme">⌨</div>
+        <div class="meme">✿</div>
+        <div class="meme">★</div>
+        <div class="meme">☕</div>
+        <div class="meme">🥹</div>
+        <div class="meme">📟</div>
+      </div>
+    </section>
+
+    <!-- ============ CREATE ============ -->
+    <section id="screen-create" class="screen">
+      <h1 class="title">create_room() <span class="heart">♥</span></h1>
+      <p class="subtitle">give yourself a name — you'll be player one</p>
+
+      <div class="card solid" data-tag="// player_one.json" style="max-width: 480px;">
+        <div class="field">
+          <label for="createName">your name</label>
+          <input id="createName" type="text" maxlength="20" placeholder="solbee" />
+        </div>
+        <div id="createError" class="error" style="display:none;"></div>
+        <button class="btn" id="createGoBtn" disabled>create_room() →</button>
+        <button class="btn ghost small" id="createBackBtn" style="margin-left: 8px;">← back</button>
+      </div>
+    </section>
+
+    <!-- ============ JOIN ============ -->
+    <section id="screen-join" class="screen">
+      <h1 class="title">join_room() <span class="heart">♥</span></h1>
+      <p class="subtitle">enter the code your partner sent you</p>
+
+      <div class="card solid" data-tag="// player_two.json" style="max-width: 480px;">
+        <div class="field">
+          <label for="joinCode">room code</label>
+          <input id="joinCode" type="text" maxlength="4" placeholder="ABCD" style="text-transform: uppercase; letter-spacing: 6px;" />
+        </div>
+        <div class="field">
+          <label for="joinName">your name</label>
+          <input id="joinName" type="text" maxlength="20" placeholder="your name" />
+        </div>
+        <div id="joinError" class="error" style="display:none;"></div>
+        <button class="btn" id="joinGoBtn" disabled>join_room() →</button>
+        <button class="btn ghost small" id="joinBackBtn" style="margin-left: 8px;">← back</button>
+      </div>
+    </section>
+
+    <!-- ============ WAITING ============ -->
+    <section id="screen-waiting" class="screen">
+      <h1 class="title">waiting room <span class="heart">♥</span></h1>
+      <p class="subtitle">send this code to your partner so they can join</p>
+
+      <div class="code-box">
+        <div class="label">ROOM CODE</div>
+        <div class="code" id="waitingCode">----</div>
+      </div>
+
+      <div class="copy-row">
+        <button class="btn small" id="copyCodeBtn">copy code</button>
+        <button class="btn ghost small" id="leaveRoomBtn">leave room</button>
+      </div>
+
+      <div class="waiting-status">
+        <span class="pulse blink">●</span> <span id="waitingText">connecting...</span>
+      </div>
+    </section>
+
+    <!-- ============ GAME ============ -->
+    <section id="screen-game" class="screen">
+      <div class="game-header">
+        <button class="nav-btn" id="menuBtn" title="menu">☰</button>
+        <div>[<span id="qNum">01</span> / <span id="qTotal">10</span>]<span id="answeredPill"></span></div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div id="difficultyLabel" style="font-size: 11px; letter-spacing: 1px;">EASY MODE</div>
+        <div class="nav-group">
+          <button class="nav-btn" id="prevQBtn" title="previous question">←</button>
+          <button class="nav-btn" id="nextQBtn" title="next question">→</button>
+        </div>
+      </div>
+
+      <div class="question-card">
+        <div class="q-meta">
+          <span class="tag" id="qTag">warmup</span>
+          <span id="qCategory">about_them</span>
+        </div>
+        <div class="q-text" id="qText">loading...</div>
+        <div class="q-emoji" id="qEmoji">♡</div>
+      </div>
+
+      <div class="answers">
+        <div class="answer-card mine" id="cardMine" data-label="">
+          <div class="who" id="whoMine">you:</div>
+          <textarea id="answerMine" placeholder="type your guess here..."></textarea>
+          <div class="reveal-text" id="revealMine" style="display:none;"></div>
+          <div class="status waiting" id="statusMine"><span class="dot"></span><span id="statusMineText">typing...</span></div>
+        </div>
+
+        <div class="answer-card theirs" id="cardTheirs" data-label="">
+          <div class="who" id="whoTheirs">them:</div>
+          <div class="hidden-answer" id="hiddenTheirs">
+            <span class="typing-dots">typing</span>
+          </div>
+          <div class="reveal-text" id="revealTheirs" style="display:none;"></div>
+          <div class="status waiting" id="statusTheirs"><span class="dot"></span><span id="statusTheirsText">typing...</span></div>
+        </div>
+      </div>
+
+      <div class="actions-row">
+        <button class="btn" id="lockBtn" disabled>lock_in_answer() ✓</button>
+        <button class="btn ghost" id="nextBtn" style="display:none;">next_question() →</button>
+      </div>
+    </section>
+
+    <!-- ============ MENU MODAL ============ -->
+    <div class="modal-overlay" id="menuModal">
+      <div class="modal">
+        <h3>pause_menu()</h3>
+        <p class="sub">what would you like to do?</p>
+        <div class="modal-actions">
+          <button class="btn ghost" id="menuResumeBtn">← back to game</button>
+          <button class="btn ghost" id="menuStartOverBtn">↻ start over (clears all answers)</button>
+          <button class="btn" id="menuSaveExitBtn">💾 save and exit</button>
+        </div>
+        <p style="font-size: 11px; color: var(--muted); margin-top: 16px; text-align: center;">
+          save and exit keeps your room — rejoin from the lobby anytime.
+        </p>
+      </div>
+    </div>
+
+    <!-- ============ END ============ -->
+    <section id="screen-end" class="screen">
+      <div class="end-card">
+        <span class="big-emoji">♥</span>
+        <h2>game.complete()</h2>
+        <p id="endMessage">you know each other a little better now. (or maybe a lot better. or maybe you've found some red flags. either way: still cute.)</p>
+        <div class="summary" id="summary"></div>
+        <button class="btn" id="restartBtn">./play_again.sh ↻</button>
+      </div>
+    </section>
+
+  </div>
+
+<script type="module">
+  // Lazy-loaded so a CDN hiccup doesn't kill all the click handlers
+  let _joinRoom = null;
+  async function getJoinRoom() {
+    if (_joinRoom) return _joinRoom;
+    const urls = [
+      'https://esm.sh/@trystero-p2p/torrent@0.25.1',
+      'https://cdn.jsdelivr.net/npm/@trystero-p2p/torrent@0.25.1/+esm'
+    ];
+    let lastErr = null;
+    for (const url of urls) {
+      try {
+        const mod = await import(url);
+        if (mod.joinRoom) {
+          _joinRoom = mod.joinRoom;
+          return _joinRoom;
+        }
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+    throw new Error("Couldn't load the sync library: " + (lastErr?.message || "unknown"));
+  }
+
+  // ============ QUESTIONS ============
+  const QUESTIONS = [
+    { text: "when is your lover's birthday?", emoji: "🎂", tag: "easy", category: "about_them", target: "other", difficulty: "EASY MODE" },
+    { text: "how many siblings does your lover have? (bonus: names)", emoji: "👨‍👩‍👧", tag: "easy", category: "family", target: "other", difficulty: "EASY MODE" },
+    { text: "what's your lover's middle name?", emoji: "✒", tag: "easy", category: "identity", target: "other", difficulty: "EASY MODE" },
+    { text: "what's the first food your lover would order on a sad day?", emoji: "🍜", tag: "medium", category: "comfort", target: "other", difficulty: "GETTING WARMER" },
+    { text: "what was your lover's very first job?", emoji: "💼", tag: "medium", category: "backstory", target: "other", difficulty: "GETTING WARMER" },
+    { text: "mountains or beach — where would you actually want to live?", emoji: "⛰", tag: "self", category: "preference", target: "self", difficulty: "PLOT TWIST" },
+    { text: "what's your lover's most irrational fear?", emoji: "👻", tag: "spicy", category: "inner_world", target: "other", difficulty: "HARD MODE" },
+    { text: "if your lover had to delete every app except three, which 3 survive?", emoji: "📱", tag: "spicy", category: "habits", target: "other", difficulty: "HARD MODE" },
+    { text: "what's the last thing that made your lover ugly-laugh?", emoji: "😭", tag: "spicy", category: "vibes", target: "other", difficulty: "HARD MODE" },
+    { text: "what's one thing you wish your lover would do more of?", emoji: "🥺", tag: "feelings", category: "the_real_talk", target: "self", difficulty: "FINAL BOSS" }
+  ];
+
+  const APP_ID = 'i-love-you-but-who-are-you-v1';
+  const $ = (id) => document.getElementById(id);
+  const SCREENS = ["lobby", "create", "join", "waiting", "game", "end"];
+  function showScreen(name) {
+    SCREENS.forEach(s => $(`screen-${s}`).classList.remove("active"));
+    $(`screen-${name}`).classList.add("active");
+    $("topbar-status").textContent =
+      name === "lobby" ? "idle" :
+      name === "waiting" ? "waiting for peer" :
+      name === "game" ? "running" :
+      name === "end" ? "complete" : name;
+  }
+
+  // ============ STATE ============
+  let roomCode = null;
+  let myRole = null;       // "p1" or "p2"
+  let myName = "";
+  let room = null;         // trystero room handle
+  let stateAction = null;  // trystero action object { send, onMessage, ... }
+  let resetAction = null;
+  let peerConnected = false;
+
+  // shared game state (synced)
+  let state = {
+    p1: null,    // { name }
+    p2: null,    // { name }
+    currentQ: 0,
+    answers: {}  // { qIdx: { p1, p2 } }
+  };
+
+  // ============ LOCALSTORAGE ============
+  function loadLastRoom() {
+    try { return JSON.parse(localStorage.getItem("loveGameLastRoom") || "null"); }
+    catch { return null; }
+  }
+  function saveLastRoom(info) { localStorage.setItem("loveGameLastRoom", JSON.stringify(info)); }
+  function clearLastRoom() { localStorage.removeItem("loveGameLastRoom"); }
+
+  function saveStateToLS() {
+    if (!roomCode) return;
+    localStorage.setItem(`loveGameState:${roomCode}`, JSON.stringify(state));
+  }
+  function loadStateFromLS(code) {
+    try { return JSON.parse(localStorage.getItem(`loveGameState:${code}`) || "null"); }
+    catch { return null; }
+  }
+  function clearStateFromLS(code) { localStorage.removeItem(`loveGameState:${code}`); }
+
+  function refreshRejoinBanner() {
+    const info = loadLastRoom();
+    const banner = $("rejoinBanner");
+    if (info && info.code) {
+      $("rejoinCode").textContent = info.code;
+      $("rejoinMeta").textContent = `you were ${info.name} — picks up where you left off`;
+      banner.style.display = "";
+    } else {
+      banner.style.display = "none";
+    }
+  }
+
+  // ============ ROOM CODE ============
+  function makeRoomCode() {
+    const alphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+    let code = "";
+    for (let i = 0; i < 4; i++) code += alphabet[Math.floor(Math.random() * alphabet.length)];
+    return code;
+  }
+
+  // ============ TRYSTERO ROOM ============
+  function leaveRoomCleanup() {
+    if (room) {
+      try { room.leave(); } catch {}
+    }
+    room = null;
+    stateAction = null;
+    resetAction = null;
+    peerConnected = false;
+  }
+
+  async function setupRoom(code) {
+    leaveRoomCleanup();
+    roomCode = code;
+    const config = { appId: APP_ID };
+    const joinRoom = await getJoinRoom();
+    room = joinRoom(config, code);
+
+    stateAction = room.makeAction('state');
+    resetAction = room.makeAction('reset');
+
+    stateAction.onMessage = (remote) => {
+      mergeRemoteState(remote);
+      saveStateToLS();
+      renderAll();
+    };
+
+    resetAction.onMessage = () => {
+      state.currentQ = 0;
+      state.answers = {};
+      saveStateToLS();
+      renderAll();
+    };
+
+    room.onPeerJoin = (peerId) => {
+      peerConnected = true;
+      // Send full state to newcomer so they sync up
+      try { stateAction.send(state); } catch {}
+      $("waitingText").textContent = "partner connected — starting game...";
+      // If we're in waiting screen, advance to game
+      if ($("screen-waiting").classList.contains("active")) {
+        setTimeout(() => showScreen("game"), 500);
+      }
+      renderAll();
+    };
+
+    room.onPeerLeave = (peerId) => {
+      peerConnected = false;
+      renderAll();
+    };
+  }
+
+  function mergeRemoteState(remote) {
+    if (!remote) return;
+    // names — always accept remote's authoritative own-name field
+    if (remote.p1 && (!state.p1 || remote.p1.name !== state.p1?.name)) {
+      // p1 name is authoritative when sent by p1; for safety, just take if local empty or different
+      state.p1 = remote.p1;
+    }
+    if (remote.p2 && (!state.p2 || remote.p2.name !== state.p2?.name)) {
+      state.p2 = remote.p2;
+    }
+    if (typeof remote.currentQ === 'number') {
+      state.currentQ = remote.currentQ;
+    }
+    if (remote.answers) {
+      const partnerRole = myRole === "p1" ? "p2" : "p1";
+      for (const [q, ans] of Object.entries(remote.answers)) {
+        if (!state.answers[q]) state.answers[q] = {};
+        // accept partner's answer from remote (they own it)
+        if (ans[partnerRole] !== undefined && ans[partnerRole] !== null) {
+          state.answers[q][partnerRole] = ans[partnerRole];
+        }
+        // accept my own answer only if we don't have one locally (rejoin recovery)
+        if (ans[myRole] !== undefined && ans[myRole] !== null && (state.answers[q][myRole] === undefined || state.answers[q][myRole] === null)) {
+          state.answers[q][myRole] = ans[myRole];
+        }
+      }
+    }
+  }
+
+  function broadcast() {
+    if (stateAction) {
+      try { stateAction.send(state); } catch {}
+    }
+    saveStateToLS();
+  }
+
+  // ============ LOBBY ============
+  $("createChoice").addEventListener("click", () => {
+    $("createName").value = "";
+    $("createGoBtn").disabled = true;
+    $("createError").style.display = "none";
+    showScreen("create");
+    $("createName").focus();
+  });
+  $("joinChoice").addEventListener("click", () => {
+    $("joinCode").value = "";
+    $("joinName").value = "";
+    $("joinGoBtn").disabled = true;
+    $("joinError").style.display = "none";
+    showScreen("join");
+    $("joinCode").focus();
+  });
+
+  // ============ CREATE ============
+  $("createName").addEventListener("input", () => {
+    $("createGoBtn").disabled = !$("createName").value.trim();
+  });
+  $("createBackBtn").addEventListener("click", () => showScreen("lobby"));
+
+  $("createGoBtn").addEventListener("click", async () => {
+    const name = $("createName").value.trim();
+    if (!name) return;
+    const errEl = $("createError");
+    errEl.style.display = "none";
+    $("createGoBtn").disabled = true;
+    $("createGoBtn").textContent = "connecting...";
+    try {
+      const code = makeRoomCode();
+      myRole = "p1";
+      myName = name;
+      state = { p1: { name }, p2: null, currentQ: 0, answers: {} };
+      saveLastRoom({ code, role: "p1", name });
+      await setupRoom(code);
+      $("waitingCode").textContent = code;
+      $("waitingText").textContent = "waiting for your lover to join...";
+      $("topbar-right").textContent = `room: ${code} — ${name}`;
+      showScreen("waiting");
+    } catch (e) {
+      errEl.textContent = "× " + e.message;
+      errEl.style.display = "block";
+    } finally {
+      $("createGoBtn").disabled = false;
+      $("createGoBtn").textContent = "create_room() →";
+    }
+  });
+
+  $("copyCodeBtn").addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(roomCode);
+      $("copyCodeBtn").textContent = "copied ✓";
+      setTimeout(() => { $("copyCodeBtn").textContent = "copy code"; }, 1500);
+    } catch {}
+  });
+
+  $("leaveRoomBtn").addEventListener("click", () => {
+    if (!confirm("Leave this room? The code will no longer work.")) return;
+    if (roomCode) clearStateFromLS(roomCode);
+    clearLastRoom();
+    leaveRoomCleanup();
+    roomCode = null;
+    myRole = null;
+    myName = "";
+    state = { p1: null, p2: null, currentQ: 0, answers: {} };
+    $("topbar-right").textContent = "";
+    refreshRejoinBanner();
+    showScreen("lobby");
+  });
+
+  // ============ JOIN ============
+  function checkJoinReady() {
+    const code = $("joinCode").value.trim();
+    const name = $("joinName").value.trim();
+    $("joinGoBtn").disabled = !(code.length === 4 && name);
+  }
+  $("joinCode").addEventListener("input", (e) => {
+    e.target.value = e.target.value.toUpperCase();
+    checkJoinReady();
+  });
+  $("joinName").addEventListener("input", checkJoinReady);
+  $("joinBackBtn").addEventListener("click", () => showScreen("lobby"));
+
+  $("joinGoBtn").addEventListener("click", async () => {
+    const code = $("joinCode").value.trim().toUpperCase();
+    const name = $("joinName").value.trim();
+    if (code.length !== 4 || !name) return;
+    const errEl = $("joinError");
+    errEl.style.display = "none";
+    $("joinGoBtn").disabled = true;
+    $("joinGoBtn").textContent = "connecting...";
+    try {
+      myRole = "p2";
+      myName = name;
+      state = { p1: null, p2: { name }, currentQ: 0, answers: {} };
+      saveLastRoom({ code, role: "p2", name });
+      await setupRoom(code);
+      $("topbar-right").textContent = `room: ${code} — ${name}`;
+      showScreen("game");
+      setTimeout(() => broadcast(), 500);
+      renderAll();
+    } catch (e) {
+      errEl.textContent = "× " + e.message;
+      errEl.style.display = "block";
+    } finally {
+      $("joinGoBtn").disabled = false;
+      $("joinGoBtn").textContent = "join_room() →";
+    }
+  });
+
+  // ============ GAME RENDERING ============
+  function renderAll() {
+    const q = QUESTIONS[state.currentQ];
+    if (!q) {
+      finishGame();
+      return;
+    }
+    renderQuestion();
+    renderAnswers();
+  }
+
+  function partnerName() {
+    if (myRole === "p1") return state.p2?.name || "";
+    return state.p1?.name || "";
+  }
+
+  function renderQuestion() {
+    const idx = state.currentQ;
+    const q = QUESTIONS[idx];
+    $("qNum").textContent = String(idx + 1).padStart(2, "0");
+    $("qTotal").textContent = String(QUESTIONS.length).padStart(2, "0");
+    $("qText").textContent = q.text;
+    $("qEmoji").textContent = q.emoji;
+    $("qTag").textContent = q.tag;
+    $("qCategory").textContent = q.category;
+    $("difficultyLabel").textContent = q.difficulty;
+    $("progressFill").style.width = `${(idx / QUESTIONS.length) * 100}%`;
+
+    if (q.target === "self") {
+      $("whoMine").textContent = `${myName} — about yourself:`;
+      $("whoTheirs").textContent = `${partnerName() || "them"} — about themselves:`;
+    } else {
+      $("whoMine").textContent = `${myName} — guessing about ${partnerName() || "them"}:`;
+      $("whoTheirs").textContent = `${partnerName() || "them"} — guessing about ${myName}:`;
+    }
+
+    $("prevQBtn").disabled = idx <= 0;
+    $("nextQBtn").disabled = idx >= QUESTIONS.length - 1;
+
+    $("cardMine").setAttribute("data-label", `${myName.toLowerCase()}.txt (you)`);
+    $("cardTheirs").setAttribute("data-label", `${(partnerName() || "them").toLowerCase()}.txt`);
+  }
+
+  function renderAnswers() {
+    const idx = state.currentQ;
+    const ansForQ = state.answers[idx] || {};
+    const myAns = ansForQ[myRole];
+    const partnerRole = myRole === "p1" ? "p2" : "p1";
+    const theirAns = ansForQ[partnerRole];
+
+    // restore my draft if I haven't locked in
+    if (myAns === undefined || myAns === null) {
+      // my textarea is editable; if it's a fresh question render, clear it
+      if ($("answerMine").dataset.q !== String(idx)) {
+        $("answerMine").value = "";
+        $("answerMine").dataset.q = String(idx);
+      }
+      $("answerMine").style.display = "";
+      $("revealMine").style.display = "none";
+      $("answerMine").disabled = false;
+      const v = $("answerMine").value.trim();
+      $("lockBtn").style.display = "";
+      $("lockBtn").disabled = !v;
+      $("statusMine").className = "status waiting";
+      $("statusMineText").textContent = v ? "ready to lock in" : "typing...";
+    } else {
+      // I've locked in
+      $("answerMine").style.display = "none";
+      $("revealMine").style.display = "";
+      $("revealMine").textContent = myAns || "(silence)";
+      $("revealMine").classList.toggle("empty", !myAns);
+      $("statusMine").className = "status locked";
+      $("statusMineText").textContent = "locked in ✓";
+      $("lockBtn").style.display = "none";
+      $("answerMine").dataset.q = String(idx);
+    }
+
+    // Their card
+    if (theirAns !== undefined && theirAns !== null) {
+      if (myAns !== undefined && myAns !== null) {
+        // both → reveal
+        $("hiddenTheirs").style.display = "none";
+        $("revealTheirs").style.display = "";
+        $("revealTheirs").textContent = theirAns || "(silence)";
+        $("revealTheirs").classList.toggle("empty", !theirAns);
+        $("statusTheirs").className = "status locked";
+        $("statusTheirsText").textContent = "revealed ✦";
+        $("nextBtn").style.display = state.currentQ >= QUESTIONS.length - 1 ? "none" : "";
+      } else {
+        $("hiddenTheirs").style.display = "";
+        $("hiddenTheirs").innerHTML = '<strong>locked in ✓</strong><br><span style="font-size:14px;">waiting on you...</span>';
+        $("revealTheirs").style.display = "none";
+        $("statusTheirs").className = "status locked";
+        $("statusTheirsText").textContent = "locked in ✓ — waiting for you";
+        $("nextBtn").style.display = "none";
+      }
+    } else {
+      $("hiddenTheirs").style.display = "";
+      const pn = partnerName();
+      if (!peerConnected) {
+        $("hiddenTheirs").innerHTML = '<span style="font-size:14px;">⚡ not connected yet — share the room code</span>';
+        $("statusTheirsText").textContent = "not connected";
+      } else {
+        $("hiddenTheirs").innerHTML = pn
+          ? `${pn} is <span class="typing-dots">typing</span>`
+          : 'waiting for them...';
+        $("statusTheirsText").textContent = pn ? `${pn} is typing...` : "waiting...";
+      }
+      $("revealTheirs").style.display = "none";
+      $("statusTheirs").className = "status waiting";
+      $("nextBtn").style.display = "none";
+    }
+
+    // answered pill
+    const bothAnswered = (ansForQ.p1 !== undefined && ansForQ.p1 !== null) &&
+                         (ansForQ.p2 !== undefined && ansForQ.p2 !== null);
+    $("answeredPill").innerHTML = bothAnswered ? ' <span class="answered-pill">REVEALED</span>' : '';
+  }
+
+  // ============ LOCK / NEXT ============
+  $("answerMine").addEventListener("input", () => {
+    const v = $("answerMine").value.trim();
+    $("lockBtn").disabled = !v;
+    $("statusMineText").textContent = v ? "ready to lock in" : "typing...";
+  });
+  $("answerMine").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      if (!$("lockBtn").disabled) $("lockBtn").click();
+    }
+  });
+
+  $("lockBtn").addEventListener("click", () => {
+    const v = $("answerMine").value.trim();
+    if (!v) return;
+    const idx = state.currentQ;
+    if (!state.answers[idx]) state.answers[idx] = {};
+    state.answers[idx][myRole] = v;
+    broadcast();
+    renderAnswers();
+  });
+
+  $("nextBtn").addEventListener("click", () => {
+    if (state.currentQ >= QUESTIONS.length - 1) {
+      finishGame();
+      return;
+    }
+    state.currentQ += 1;
+    broadcast();
+    renderAll();
+  });
+
+  // ============ MENU ============
+  function openMenu() { $("menuModal").classList.add("active"); }
+  function closeMenu() { $("menuModal").classList.remove("active"); }
+  $("menuBtn").addEventListener("click", openMenu);
+  $("menuResumeBtn").addEventListener("click", closeMenu);
+  $("menuModal").addEventListener("click", (e) => {
+    if (e.target === $("menuModal")) closeMenu();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && $("menuModal").classList.contains("active")) closeMenu();
+  });
+
+  $("menuStartOverBtn").addEventListener("click", () => {
+    if (!confirm("Wipe all answers and start at question 1? This affects both players.")) return;
+    state.currentQ = 0;
+    state.answers = {};
+    broadcast();
+    if (resetAction) { try { resetAction.send({}); } catch {} }
+    renderAll();
+    closeMenu();
+  });
+
+  $("menuSaveExitBtn").addEventListener("click", () => {
+    // Keep lastRoom and state in LS for rejoin
+    saveStateToLS();
+    leaveRoomCleanup();
+    const keepLast = loadLastRoom(); // already set on create/join
+    roomCode = null;
+    myRole = null;
+    myName = "";
+    state = { p1: null, p2: null, currentQ: 0, answers: {} };
+    $("topbar-right").textContent = "";
+    closeMenu();
+    refreshRejoinBanner();
+    showScreen("lobby");
+  });
+
+  // ============ NAV ARROWS ============
+  $("prevQBtn").addEventListener("click", () => {
+    if (state.currentQ <= 0) return;
+    state.currentQ -= 1;
+    broadcast();
+    renderAll();
+  });
+  $("nextQBtn").addEventListener("click", () => {
+    if (state.currentQ >= QUESTIONS.length - 1) return;
+    state.currentQ += 1;
+    broadcast();
+    renderAll();
+  });
+
+  // ============ REJOIN ============
+  $("rejoinBtn").addEventListener("click", async () => {
+    const info = loadLastRoom();
+    if (!info) return;
+    $("rejoinBtn").disabled = true;
+    $("rejoinBtn").textContent = "connecting...";
+    try {
+      const saved = loadStateFromLS(info.code);
+      if (saved) {
+        state = saved;
+      } else {
+        state = { p1: null, p2: null, currentQ: 0, answers: {} };
+        if (info.role === "p1") state.p1 = { name: info.name };
+        else state.p2 = { name: info.name };
+      }
+      myRole = info.role;
+      myName = info.name;
+      await setupRoom(info.code);
+      $("topbar-right").textContent = `room: ${info.code} — ${info.name}`;
+      $("waitingCode").textContent = info.code;
+      showScreen("game");
+      renderAll();
+      setTimeout(() => broadcast(), 500);
+    } catch (e) {
+      alert("Couldn't rejoin: " + e.message);
+    } finally {
+      $("rejoinBtn").disabled = false;
+      $("rejoinBtn").textContent = "rejoin →";
+    }
+  });
+  $("forgetRejoinBtn").addEventListener("click", () => {
+    if (!confirm("Forget this room?")) return;
+    const info = loadLastRoom();
+    if (info) clearStateFromLS(info.code);
+    clearLastRoom();
+    refreshRejoinBanner();
+  });
+
+  // ============ END ============
+  function finishGame() {
+    $("progressFill").style.width = "100%";
+    const summary = $("summary");
+    const p1Name = state.p1?.name || "p1";
+    const p2Name = state.p2?.name || "p2";
+    const rows = [];
+    for (let i = 0; i < QUESTIONS.length; i++) {
+      const a = state.answers[i] || {};
+      rows.push(`
+        <div class="q">[${String(i + 1).padStart(2, "0")}] ${escapeHtml(QUESTIONS[i].text)}</div>
+        <div class="a"><span>${escapeHtml(p1Name)} →</span> ${escapeHtml(a.p1) || "<em>—</em>"}</div>
+        <div class="a"><span>${escapeHtml(p2Name)} →</span> ${escapeHtml(a.p2) || "<em>—</em>"}</div>
+      `);
+    }
+    summary.innerHTML = rows.join("");
+    showScreen("end");
+  }
+
+  $("restartBtn").addEventListener("click", () => {
+    if (roomCode) clearStateFromLS(roomCode);
+    clearLastRoom();
+    leaveRoomCleanup();
+    roomCode = null;
+    myRole = null;
+    myName = "";
+    state = { p1: null, p2: null, currentQ: 0, answers: {} };
+    $("topbar-right").textContent = "";
+    refreshRejoinBanner();
+    showScreen("lobby");
+  });
+
+  function escapeHtml(s) {
+    if (s == null) return "";
+    return String(s).replace(/[&<>"']/g, (c) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    }[c]));
+  }
+
+  // ============ BOOT ============
+  refreshRejoinBanner();
+  showScreen("lobby");
+</script>
+</body>
+</html>
