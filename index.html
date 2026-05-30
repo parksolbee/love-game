@@ -543,7 +543,7 @@
     <!-- ============ LOBBY ============ -->
     <section id="screen-lobby" class="screen active">
       <h1 class="title">i love you, <span class="heart">♥</span><br>but who are you?</h1>
-      <p class="subtitle">a date_night.exe utility — v3.0.3 — now with self-portraits</p>
+      <p class="subtitle">a date_night.exe utility — v3.0.4 — getting spicy</p>
 
       <div class="rejoin-banner" id="rejoinBanner" style="display:none;">
         <div class="info">
@@ -797,8 +797,8 @@
     { text: "what's the first food your lover would order on a sad day?", emoji: "🍜", tag: "medium", category: "comfort", target: "other", difficulty: "GETTING WARMER" },
     { text: "what was your lover's very first job?", emoji: "💼", tag: "medium", category: "backstory", target: "other", difficulty: "GETTING WARMER" },
     { text: "mountains or beach — where would you actually want to live?", emoji: "⛰", tag: "self", category: "preference", target: "self", difficulty: "PLOT TWIST" },
-    { text: "what's your lover's most irrational fear?", emoji: "👻", tag: "spicy", category: "inner_world", target: "other", difficulty: "HARD MODE" },
-    { text: "if your lover had to delete every app except three, which 3 survive?", emoji: "📱", tag: "spicy", category: "habits", target: "other", difficulty: "HARD MODE" },
+    { text: "what's your favorite body part of your lover? (and why? 👀)", emoji: "💋", tag: "spicy", category: "after_dark", target: "opinion", difficulty: "HARD MODE" },
+    { text: "what's something your lover does in bed that's incredibly sexy?", emoji: "🔥", tag: "spicy", category: "between_us", target: "opinion", difficulty: "HARD MODE" },
     { text: "what's the last thing that made your lover ugly-laugh?", emoji: "😭", tag: "spicy", category: "vibes", target: "other", difficulty: "HARD MODE" },
     { text: "what's one thing you wish your lover would do more of?", emoji: "🥺", tag: "feelings", category: "the_real_talk", target: "self", difficulty: "FINAL BOSS" }
   ];
@@ -1187,6 +1187,9 @@
     if (q.target === "self") {
       $("whoMine").textContent = `${myName} — about yourself:`;
       $("whoTheirs").textContent = `${partnerName() || "ddongjaengyi"} — about themselves:`;
+    } else if (q.target === "opinion") {
+      $("whoMine").textContent = `${myName} — about ${partnerName() || "ddongjaengyi"}:`;
+      $("whoTheirs").textContent = `${partnerName() || "ddongjaengyi"} — about ${myName}:`;
     } else {
       $("whoMine").textContent = `${myName} — guessing about ${partnerName() || "ddongjaengyi"}:`;
       $("whoTheirs").textContent = `${partnerName() || "ddongjaengyi"} — guessing about ${myName}:`;
