@@ -782,10 +782,11 @@
     return `${proto}//${location.host}/ws`;
   }
 
-  function joinRoom(_config, code) {
+  function joinRoom(_config, code, opts = {}) {
     const ws = new WebSocket(wsUrl());
     const actions = {};
     const outbox = [];
+    const peers = {};   // peerId -> true, kept in sync from server messages
     let open = false;
 
     function rawSend(obj) {
@@ -797,6 +798,8 @@
     const handle = {
       onPeerJoin: null,
       onPeerLeave: null,
+      // Mirrors Trystero's API so the polling fallback below keeps working.
+      getPeers: () => peers,
       makeAction(name) {
         const action = {
           onMessage: null,
@@ -816,13 +819,18 @@
     ws.onmessage = (ev) => {
       let msg;
       try { msg = JSON.parse(ev.data); } catch { return; }
-      if (msg.type === 'peerJoin') { handle.onPeerJoin && handle.onPeerJoin(msg.peerId); }
-      else if (msg.type === 'peerLeave') { handle.onPeerLeave && handle.onPeerLeave(msg.peerId); }
-      else if (msg.type === 'action') {
+      if (msg.type === 'peerJoin') {
+        peers[msg.peerId] = true;
+        handle.onPeerJoin && handle.onPeerJoin(msg.peerId);
+      } else if (msg.type === 'peerLeave') {
+        delete peers[msg.peerId];
+        handle.onPeerLeave && handle.onPeerLeave(msg.peerId);
+      } else if (msg.type === 'action') {
         const action = actions[msg.action];
         if (action && action.onMessage) action.onMessage(msg.payload);
       }
     };
+    ws.onerror = (e) => { opts.onJoinError && opts.onJoinError(e); };
 
     return handle;
   }
