@@ -543,7 +543,7 @@
     <!-- ============ LOBBY ============ -->
     <section id="screen-lobby" class="screen active">
       <h1 class="title">i love you, <span class="heart">♥</span><br>but who are you?</h1>
-      <p class="subtitle">a date_night.exe utility — v3.0.4 — getting spicy</p>
+      <p class="subtitle">a date_night.exe utility — v3.0.5 — reliable peering</p>
 
       <div class="rejoin-banner" id="rejoinBanner" style="display:none;">
         <div class="info">
@@ -686,6 +686,13 @@
       <div class="waiting-status">
         <span class="pulse blink">●</span> <span id="waitingText">connecting...</span>
       </div>
+
+      <div style="text-align:center; margin-top:24px;">
+        <button class="btn ghost small" id="forceStartBtn">skip ahead → enter game anyway</button>
+        <p style="font-size:11px; color:var(--muted); margin-top:8px;">
+          if your partner says they joined but you're stuck here, click this
+        </p>
+      </div>
     </section>
 
     <!-- ============ GAME ============ -->
@@ -824,6 +831,7 @@
   let stateAction = null;  // trystero action object { send, onMessage, ... }
   let resetAction = null;
   let peerConnected = false;
+  let peerPollInterval = null;
 
   // shared game state (synced)
   let state = {
@@ -873,6 +881,7 @@
 
   // ============ TRYSTERO ROOM ============
   function leaveRoomCleanup() {
+    if (peerPollInterval) { clearInterval(peerPollInterval); peerPollInterval = null; }
     if (room) {
       try { room.leave(); } catch {}
     }
@@ -882,12 +891,29 @@
     peerConnected = false;
   }
 
+  function handlePeerJoined() {
+    if (peerConnected) return;
+    peerConnected = true;
+    console.log("[love-game] peer connected");
+    try { stateAction.send(state); } catch (e) { console.warn("send failed", e); }
+    $("waitingText").textContent = "partner connected — starting game...";
+    if ($("screen-waiting").classList.contains("active")) {
+      setTimeout(() => showScreen("game"), 500);
+    }
+    renderAll();
+  }
+
   async function setupRoom(code) {
     leaveRoomCleanup();
     roomCode = code;
     const config = { appId: APP_ID };
     const joinRoom = await getJoinRoom();
-    room = joinRoom(config, code);
+    console.log("[love-game] joining room:", code);
+    room = joinRoom(config, code, {
+      onJoinError: (details) => {
+        console.warn("[love-game] join error:", details);
+      }
+    });
 
     stateAction = room.makeAction('state');
     resetAction = room.makeAction('reset');
@@ -906,21 +932,33 @@
     };
 
     room.onPeerJoin = (peerId) => {
-      peerConnected = true;
-      // Send full state to newcomer so they sync up
-      try { stateAction.send(state); } catch {}
-      $("waitingText").textContent = "partner connected — starting game...";
-      // If we're in waiting screen, advance to game
-      if ($("screen-waiting").classList.contains("active")) {
-        setTimeout(() => showScreen("game"), 500);
-      }
-      renderAll();
+      console.log("[love-game] onPeerJoin fired:", peerId);
+      handlePeerJoined();
     };
 
     room.onPeerLeave = (peerId) => {
+      console.log("[love-game] onPeerLeave fired:", peerId);
       peerConnected = false;
       renderAll();
     };
+
+    // Polling fallback in case onPeerJoin doesn't fire reliably
+    peerPollInterval = setInterval(() => {
+      if (!room) return;
+      try {
+        const peers = room.getPeers?.() || {};
+        const ids = Object.keys(peers);
+        if (ids.length > 0 && !peerConnected) {
+          console.log("[love-game] peer detected via poll:", ids);
+          handlePeerJoined();
+        } else if (ids.length === 0 && peerConnected) {
+          peerConnected = false;
+          renderAll();
+        }
+      } catch (e) {
+        console.warn("[love-game] getPeers failed:", e);
+      }
+    }, 1500);
   }
 
   function mergeRemoteState(remote) {
@@ -1099,6 +1137,11 @@
       $("copyCodeBtn").textContent = "copied ✓";
       setTimeout(() => { $("copyCodeBtn").textContent = "copy code"; }, 1500);
     } catch {}
+  });
+
+  $("forceStartBtn").addEventListener("click", () => {
+    showScreen("game");
+    renderAll();
   });
 
   $("leaveRoomBtn").addEventListener("click", () => {
