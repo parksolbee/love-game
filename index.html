@@ -466,7 +466,7 @@
     <!-- ============ LOBBY ============ -->
     <section id="screen-lobby" class="screen active">
       <h1 class="title">i love you, <span class="heart">♥</span><br>but who are you?</h1>
-      <p class="subtitle">a date_night.exe utility — v3.0.0 — peer to peer, no setup</p>
+      <p class="subtitle">a date_night.exe utility — v3.0.2 — peer to peer, no setup</p>
 
       <div class="rejoin-banner" id="rejoinBanner" style="display:none;">
         <div class="info">
@@ -594,7 +594,7 @@
         </div>
 
         <div class="answer-card theirs" id="cardTheirs" data-label="">
-          <div class="who" id="whoTheirs">them:</div>
+          <div class="who" id="whoTheirs">ddongjaengyi:</div>
           <div class="hidden-answer" id="hiddenTheirs">
             <span class="typing-dots">typing</span>
           </div>
@@ -616,7 +616,7 @@
         <p class="sub">what would you like to do?</p>
         <div class="modal-actions">
           <button class="btn ghost" id="menuResumeBtn">← back to game</button>
-          <button class="btn ghost" id="menuStartOverBtn">↻ start over (clears all answers)</button>
+          <button class="btn ghost" id="menuStartOverBtn">↻ start over (back to main menu)</button>
           <button class="btn" id="menuSaveExitBtn">💾 save and exit</button>
         </div>
         <p style="font-size: 11px; color: var(--muted); margin-top: 16px; text-align: center;">
@@ -974,17 +974,17 @@
 
     if (q.target === "self") {
       $("whoMine").textContent = `${myName} — about yourself:`;
-      $("whoTheirs").textContent = `${partnerName() || "them"} — about themselves:`;
+      $("whoTheirs").textContent = `${partnerName() || "ddongjaengyi"} — about themselves:`;
     } else {
-      $("whoMine").textContent = `${myName} — guessing about ${partnerName() || "them"}:`;
-      $("whoTheirs").textContent = `${partnerName() || "them"} — guessing about ${myName}:`;
+      $("whoMine").textContent = `${myName} — guessing about ${partnerName() || "ddongjaengyi"}:`;
+      $("whoTheirs").textContent = `${partnerName() || "ddongjaengyi"} — guessing about ${myName}:`;
     }
 
     $("prevQBtn").disabled = idx <= 0;
     $("nextQBtn").disabled = idx >= QUESTIONS.length - 1;
 
     $("cardMine").setAttribute("data-label", `${myName.toLowerCase()}.txt (you)`);
-    $("cardTheirs").setAttribute("data-label", `${(partnerName() || "them").toLowerCase()}.txt`);
+    $("cardTheirs").setAttribute("data-label", `${(partnerName() || "ddongjaengyi").toLowerCase()}.txt`);
   }
 
   function renderAnswers() {
@@ -1049,7 +1049,7 @@
       } else {
         $("hiddenTheirs").innerHTML = pn
           ? `${pn} is <span class="typing-dots">typing</span>`
-          : 'waiting for them...';
+          : 'waiting for ddongjaengyi...';
         $("statusTheirsText").textContent = pn ? `${pn} is typing...` : "waiting...";
       }
       $("revealTheirs").style.display = "none";
@@ -1109,13 +1109,18 @@
   });
 
   $("menuStartOverBtn").addEventListener("click", () => {
-    if (!confirm("Wipe all answers and start at question 1? This affects both players.")) return;
-    state.currentQ = 0;
-    state.answers = {};
-    broadcast();
-    if (resetAction) { try { resetAction.send({}); } catch {} }
-    renderAll();
+    if (!confirm("Start over? This ends the current game and goes back to the main menu.")) return;
+    if (roomCode) clearStateFromLS(roomCode);
+    clearLastRoom();
+    leaveRoomCleanup();
+    roomCode = null;
+    myRole = null;
+    myName = "";
+    state = { p1: null, p2: null, currentQ: 0, answers: {} };
+    $("topbar-right").textContent = "";
     closeMenu();
+    refreshRejoinBanner();
+    showScreen("lobby");
   });
 
   $("menuSaveExitBtn").addEventListener("click", () => {
